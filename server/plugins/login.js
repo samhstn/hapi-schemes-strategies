@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 exports.register = (server, options, next) => {
   server.route({
@@ -24,18 +25,21 @@ exports.register = (server, options, next) => {
               [user],
               function (_, data) {
                 done();
-                if (data.rows[0].password !== pass) {
-                  return reply({ message: 'Incorrect password' });
-                }
 
-                const key = crypto.randomBytes(256).toString('base64');
+                bcrypt.compare(pass, data.rows[0].password, function (_, res) {
+                  if (!res) {
+                    return reply({ message: 'Incorrect password' });
+                  }
 
-                redisCli.setAsync(user, key)
-                  // 4 hours ttl
-                  .then(() => redisCli.expireAsync(user, 4 * 60 * 60))
-                  .then(() => {
-                    reply({ message: 'Logging in' }).state('cookie', { user, key });
-                  });
+                  const key = crypto.randomBytes(256).toString('base64');
+
+                  redisCli.setAsync(user, key)
+                    // 4 hours ttl
+                    .then(() => redisCli.expireAsync(user, 4 * 60 * 60))
+                    .then(() => {
+                      reply({ message: 'Logging in' }).state('cookie', { user, key });
+                    });
+                });
               }
             );
           }

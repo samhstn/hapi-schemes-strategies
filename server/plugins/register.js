@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt');
+
 exports.register = (server, options, next) => {
   server.route({
     method: 'POST',
@@ -19,14 +21,16 @@ exports.register = (server, options, next) => {
             return reply({ message: 'Username ' + user + ' not available' });
           }
 
-          client.query(
-            'insert into user_table (username, password) values ($1, $2)',
-            [user, pass],
-            function () {
-              done();
-              reply({ message: 'User ' + user + ' registered' });
-            }
-          );
+          bcrypt.hash(pass, 3, function (_, hash) {
+            client.query(
+              'insert into user_table (username, password) values ($1, $2)',
+              [user, hash],
+              function () {
+                done();
+                reply({ message: 'User ' + user + ' registered' });
+              }
+            );
+          });
         });
       });
     }
