@@ -1,21 +1,34 @@
 exports.register = (server, options, next) => {
-
-  server.app.users = server.app.users || [];
-
   server.route({
     method: 'POST',
     path: '/register',
     handler: (request, reply) => {
       const user = request.payload.username;
       const pass = request.payload.password;
+      const pool = server.app.pool;
 
-      if (server.app.users.filter((u) => u === user)[0]) {
-        return reply({ message: 'Username ' + user + ' not available'});
+      function _available (users, username) {
+        return users.rows.map((row) => row && row.username)
+          .indexOf(username) > -1;
       }
 
-      server.app.users.push({ user, pass });
+      pool.connect((_, client, done) => {
+        client.query('select username from user_table', (_, res) => {
+          if (_available(res, user)) {
+            done();
+            return reply({ message: 'Username ' + user + ' not available' });
+          }
 
-      reply({ message: 'User ' + user + ' registered'});
+          client.query(
+            'insert into user_table (username, password) values ($1, $2)',
+            [user, pass],
+            function () {
+              done();
+              reply({ message: 'User ' + user + ' registered' });
+            }
+          );
+        });
+      });
     }
   });
 

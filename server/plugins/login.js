@@ -1,24 +1,36 @@
 exports.register = (server, options, next) => {
-  const getUser = (user) => server.app.users.filter((u) => u.user === user)[0];
-
-  const correctPass = (user, pass) => getUser(user).pass === pass;
-
   server.route({
     method: 'post',
     path: '/login',
     handler: (request, reply) => {
       const user = request.payload.username;
       const pass = request.payload.password;
+      const pool = server.app.pool;
 
-      if (!getUser(user)) {
-        return reply({ message: 'User ' + user + ' not registered' }).code(400);
-      }
+      pool.connect(function (_, client, done) {
+        client.query(
+          'select username from user_table',
+          function (_, usernameRes) {
+            if (usernameRes.rows.map((row) => row && row.username).indexOf(user) === -1) {
+              done();
+              return reply({ message: 'User ' + user + ' not registered' }).code(401);
+            }
 
-      if (!correctPass(user, pass)) {
-        return reply({ message: 'Incorrect password' });
-      }
+            client.query(
+              'select password from user_table where username=$1',
+              [user],
+              function (_, data) {
+                done();
+                if (data.rows[0].password !== pass) {
+                  return reply({ message: 'Incorrect password' });
+                }
 
-      reply({ message: 'Logging in' }).state('cookie', { user, pass });
+                reply({ message: 'Logging in' }).state('cookie', { user, pass });;
+              }
+            );
+          }
+        );
+      });
     }
   });
 

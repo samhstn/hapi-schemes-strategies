@@ -1,6 +1,7 @@
 const tape = require('tape');
 
 const server = require('../server/server.js');
+const flushDb = require('./helpers/flushDb.js')(server.app.pool);
 
 ['/login', '/register'].forEach((route) => {
   tape('GET :: ' + route, (t) => {
@@ -17,51 +18,53 @@ const server = require('../server/server.js');
 });
 
 tape('POST :: /register', (t) => {
-  const options = {
-    method: 'post',
-    url: '/register',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
+  flushDb(() => {
+    const options = {
+      method: 'post',
+      url: '/register',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  server.inject(options, (registerRes) => {
-    t.equal(registerRes.statusCode, 200);
-    t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
-    t.end();
+    server.inject(options, (registerRes) => {
+      t.equal(registerRes.statusCode, 200);
+      t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
+      t.end();
+    });
   });
 });
 
 tape('POST :: /login', (t) => {
-  server.app.users = [];
+  flushDb(() => {
+    const registerOptions = {
+      method: 'post',
+      url: '/register',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  const registerOptions = {
-    method: 'post',
-    url: '/register',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
+    const loginOptions = {
+      method: 'post',
+      url: '/login',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  const loginOptions = {
-    method: 'post',
-    url: '/login',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
-
-  server.inject(registerOptions, (registerRes) => {
-    t.equal(registerRes.statusCode, 200);
-    t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
-    server.inject(loginOptions, (loginRes) => {
-      t.equal(loginRes.statusCode, 200);
-      t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
-      t.equal(loginRes.headers['set-cookie'][0].indexOf('cookie'), 0);
-      t.end();
+    server.inject(registerOptions, (registerRes) => {
+      t.equal(registerRes.statusCode, 200);
+      t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
+      server.inject(loginOptions, (loginRes) => {
+        t.equal(loginRes.statusCode, 200);
+        t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
+        t.equal(loginRes.headers['set-cookie'][0].indexOf('cookie'), 0);
+        t.end();
+      });
     });
   });
 });
@@ -80,91 +83,91 @@ tape('GET :: / wihtout a cookie', (t) => {
 });
 
 tape('GET :: / with incorrect cookie', (t) => {
-  server.app.users = [];
+  flushDb(() => {
+    const registerOptions = {
+      method: 'post',
+      url: '/register',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  const registerOptions = {
-    method: 'post',
-    url: '/register',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
+    const loginOptions = {
+      method: 'post',
+      url: '/login',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  const loginOptions = {
-    method: 'post',
-    url: '/login',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
+    const homeOptions = {
+      method: 'get',
+      url: '/',
+      headers: {}
+    };
 
-  const homeOptions = {
-    method: 'get',
-    url: '/',
-    headers: {}
-  };
+    server.inject(registerOptions, (registerRes) => {
+      t.equal(registerRes.statusCode, 200);
+      t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
 
-  server.inject(registerOptions, (registerRes) => {
-    t.equal(registerRes.statusCode, 200);
-    t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
+      server.inject(loginOptions, (loginRes) => {
+        t.equal(loginRes.statusCode, 200);
+        t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
 
-    server.inject(loginOptions, (loginRes) => {
-      t.equal(loginRes.statusCode, 200);
-      t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
+        const wrongCookie = new Buffer(JSON.stringify({ user: 'sam', pass: 'notpass' })).toString('base64');
 
-      const wrongCookie = new Buffer(JSON.stringify({ user: 'sam', pass: 'notpass' })).toString('base64');
+        homeOptions.headers.cookie = 'cookie=' + wrongCookie;
 
-      homeOptions.headers.cookie = 'cookie=' + wrongCookie;
-
-      server.inject(homeOptions, (homeRes) => {
-        t.equal(homeRes.statusCode, 401);
-        t.equal(homeRes.payload, 'Incorrect username or password');
-        t.end();
+        server.inject(homeOptions, (homeRes) => {
+          t.equal(homeRes.statusCode, 401);
+          t.equal(homeRes.payload, 'Incorrect username or password');
+          t.end();
+        });
       });
     });
   });
 });
 
 tape('GET :: / after setting cookie', (t) => {
-  server.app.users = [];
+  flushDb(() => {
+    const registerOptions = {
+      method: 'post',
+      url: '/register',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  const registerOptions = {
-    method: 'post',
-    url: '/register',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
+    const loginOptions = {
+      method: 'post',
+      url: '/login',
+      payload: {
+        username: 'sam',
+        password: 'pass'
+      }
+    };
 
-  const loginOptions = {
-    method: 'post',
-    url: '/login',
-    payload: {
-      username: 'sam',
-      password: 'pass'
-    }
-  };
+    const homeOptions = {
+      method: 'get',
+      url: '/',
+      headers: {}
+    };
 
-  const homeOptions = {
-    method: 'get',
-    url: '/',
-    headers: {}
-  };
-
-  server.inject(registerOptions, (registerRes) => {
-    t.equal(registerRes.statusCode, 200);
-    t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
-    server.inject(loginOptions, (loginRes) => {
-      t.equal(loginRes.statusCode, 200);
-      t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
-      homeOptions.headers.cookie = loginRes.headers['set-cookie'][0].split(';')[0]
-      server.inject(homeOptions, (homeRes) => {
-        t.equal(homeRes.statusCode, 200);
-        t.ok(homeRes.payload.includes('Hello Home'));
-        t.end();
+    server.inject(registerOptions, (registerRes) => {
+      t.equal(registerRes.statusCode, 200);
+      t.equal(JSON.parse(registerRes.payload).message, 'User sam registered');
+      server.inject(loginOptions, (loginRes) => {
+        t.equal(loginRes.statusCode, 200);
+        t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
+        homeOptions.headers.cookie = loginRes.headers['set-cookie'][0].split(';')[0]
+        server.inject(homeOptions, (homeRes) => {
+          t.equal(homeRes.statusCode, 200);
+          t.ok(homeRes.payload.includes('Hello Home'));
+          t.end();
+        });
       });
     });
   });
@@ -172,6 +175,9 @@ tape('GET :: / after setting cookie', (t) => {
 
 tape.onFinish(() => {
   server.app.redisCli.flushall(() => {
-    server.app.redisCli.quit();
+    flushDb(() => {
+      server.app.redisCli.quit();
+      server.app.pool.end();
+    });
   });
 });
