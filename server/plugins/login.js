@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 exports.register = (server, options, next) => {
   server.route({
     method: 'post',
@@ -6,6 +8,7 @@ exports.register = (server, options, next) => {
       const user = request.payload.username;
       const pass = request.payload.password;
       const pool = server.app.pool;
+      const redisCli = server.app.redisCli;
 
       pool.connect(function (_, client, done) {
         client.query(
@@ -25,7 +28,14 @@ exports.register = (server, options, next) => {
                   return reply({ message: 'Incorrect password' });
                 }
 
-                reply({ message: 'Logging in' }).state('cookie', { user, pass });;
+                const key = crypto.randomBytes(256).toString('base64');
+
+                redisCli.setAsync(user, key)
+                  // 4 hours ttl
+                  .then(() => redisCli.expireAsync(user, 4 * 60 * 60))
+                  .then(() => {
+                    reply({ message: 'Logging in' }).state('cookie', { user, key });
+                  });
               }
             );
           }

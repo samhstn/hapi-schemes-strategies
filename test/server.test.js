@@ -122,7 +122,7 @@ tape('GET :: / with incorrect cookie', (t) => {
 
         server.inject(homeOptions, (homeRes) => {
           t.equal(homeRes.statusCode, 401);
-          t.equal(homeRes.payload, 'Incorrect username or password');
+          t.equal(homeRes.payload, 'Incorrect password');
           t.end();
         });
       });

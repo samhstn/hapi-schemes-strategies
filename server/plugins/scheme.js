@@ -26,9 +26,9 @@ internals.validate = (server, options) => {
       }
 
       const username = extractJson(request.headers.cookie, 'user');
-      const password = extractJson(request.headers.cookie, 'pass');
+      const key = extractJson(request.headers.cookie, 'key');
 
-      options.validateFunc(request, username, password, (err, isValid, credentials) => {
+      options.validateFunc(request, username, key, (err, isValid, credentials) => {
         if (!isValid) {
           return reply(err).code(401);
         }
