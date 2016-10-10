@@ -18,7 +18,7 @@ exports.register = (server, options, next) => {
         return reply({ message: 'Incorrect password' });
       }
 
-      reply({ message: 'Logging in' }).state('login', { user, pass });
+      reply({ message: 'Logging in' }).state('cookie', { user, pass });
     }
   });
 

@@ -1,3 +1,4 @@
+require('env2')('./config.env');
 const Hapi = require('hapi');
 const Inert = require('inert');
 
@@ -10,7 +11,7 @@ const server = new Hapi.Server();
 
 server.connection({ port });
 
-server.state('login', {
+server.state('cookie', {
   ttl: null,
   isSecure: true,
   isHttpOnly: true,

@@ -12,7 +12,7 @@ exports.register.attributes = {
   }
 };
 
-const extractJson = (cookie, str) => JSON.parse((new Buffer(cookie.split('login=')[1], 'base64')).toString())[str];
+const extractJson = (cookie, str) => JSON.parse((new Buffer(cookie.split('cookie=')[1], 'base64')).toString())[str];
 
 internals.validate = (server, options) => {
   const scheme = {

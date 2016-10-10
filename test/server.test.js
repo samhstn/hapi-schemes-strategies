@@ -60,7 +60,7 @@ tape('POST :: /login', (t) => {
     server.inject(loginOptions, (loginRes) => {
       t.equal(loginRes.statusCode, 200);
       t.equal(JSON.parse(loginRes.payload).message, 'Logging in');
-      t.equal(loginRes.headers['set-cookie'][0].indexOf('login'), 0);
+      t.equal(loginRes.headers['set-cookie'][0].indexOf('cookie'), 0);
       t.end();
     });
   });
@@ -116,7 +116,7 @@ tape('GET :: / with incorrect cookie', (t) => {
 
       const wrongCookie = new Buffer(JSON.stringify({ user: 'sam', pass: 'notpass' })).toString('base64');
 
-      homeOptions.headers.cookie = 'login=' + wrongCookie;
+      homeOptions.headers.cookie = 'cookie=' + wrongCookie;
 
       server.inject(homeOptions, (homeRes) => {
         t.equal(homeRes.statusCode, 401);
@@ -167,5 +167,11 @@ tape('GET :: / after setting cookie', (t) => {
         t.end();
       });
     });
+  });
+});
+
+tape.onFinish(() => {
+  server.app.redisCli.flushall(() => {
+    server.app.redisCli.quit();
   });
 });
