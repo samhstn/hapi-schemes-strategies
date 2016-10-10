@@ -1,0 +1,25 @@
+const pg = require('pg');
+const env = process.env;
+
+exports.register = function (server, options, next) {
+  const config = {
+    user: env.DATABASE_USER,
+    database: env.NODE_ENV === 'test' ? env.TEST_DATABASE_NAME : env.DATABASE_NAME,
+    password: '',
+    host: env.DATABASE_HOST,
+    port: env.DATABASE_PORT,
+    max: '10',
+    idleTimeoutMillis: 10000,
+    ssl: env.HEROKU
+  };
+
+  server.app.pool = new pg.Pool(config);
+  
+  next();
+}
+
+exports.register.attributes = {
+  pkg: {
+    name: 'pg'
+  }
+};
