@@ -1,0 +1,22 @@
+{
+  "name": "hapi-schemes-strategies",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server/index.js",
+  "scripts": {
+    "test": "node_modules/.bin/tape test/runner.js",
+    "start": "node server/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "hapi": "^15.1.1",
+    "hapi-auth-basic": "^4.2.0",
+    "inert": "^4.0.2"
+  },
+  "devDependencies": {
+    "shot": "^3.3.2",
+    "tape": "^4.6.2"
+  }
+}
