@@ -61,7 +61,7 @@ tape('POST :: /login', (t) => {
       t.ok(registerRes.payload.includes('Hello Register'));
       server.inject(loginOptions, (loginRes) => {
         t.equal(loginRes.statusCode, 302);
-        t.equal(loginRes.headers.location, '/index');
+        t.equal(loginRes.headers.location, '/');
         t.equal(loginRes.headers['set-cookie'][0].indexOf('cookie'), 0);
         t.end();
       });
@@ -113,7 +113,7 @@ tape('GET :: / with incorrect cookie', (t) => {
 
       server.inject(loginOptions, (loginRes) => {
         t.equal(loginRes.statusCode, 302);
-        t.equal(loginRes.headers.location, '/index');
+        t.equal(loginRes.headers.location, '/');
 
         const creds = { user: 'sam', pass: 'notpass' };
         const wrongCookie = new Buffer(JSON.stringify(creds)).toString('base64');
@@ -161,7 +161,7 @@ tape('GET :: / after setting cookie', (t) => {
       t.ok(registerRes.payload.includes('Hello Register'));
       server.inject(loginOptions, (loginRes) => {
         t.equal(loginRes.statusCode, 302);
-        t.equal(loginRes.headers.location, '/index');
+        t.equal(loginRes.headers.location, '/');
         homeOptions.headers.cookie = loginRes.headers['set-cookie'][0].split(';')[0]
         server.inject(homeOptions, (homeRes) => {
           t.equal(homeRes.statusCode, 200);
