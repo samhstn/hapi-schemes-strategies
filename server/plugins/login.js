@@ -41,7 +41,7 @@ exports.register = (server, options, next) => {
                     // 4 hours ttl
                     .then(() => redisCli.expireAsync(user, 4 * 60 * 60))
                     .then(() => {
-                      reply.redirect('/index').state('cookie', { user, key });
+                      reply.redirect('/').state('cookie', { user, key });
                     });
                 });
               }
