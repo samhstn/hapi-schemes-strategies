@@ -18,7 +18,9 @@ exports.register = (server, options, next) => {
         client.query('select username from user_table', (_, res) => {
           if (_available(res, user)) {
             done();
-            return reply({ message: 'Username ' + user + ' not available' });
+            return reply.view('register', {
+              message: 'Username ' + user + ' not available'
+            }).code(401);
           }
 
           bcrypt.hash(pass, 3, function (_, hash) {
@@ -27,7 +29,9 @@ exports.register = (server, options, next) => {
               [user, hash],
               function () {
                 done();
-                reply({ message: 'User ' + user + ' registered' });
+                reply.view('register', {
+                  message: 'User ' + user + ' registered'
+                });
               }
             );
           });

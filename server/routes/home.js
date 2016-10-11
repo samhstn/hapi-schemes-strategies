@@ -5,6 +5,6 @@ module.exports = {
     auth: 'my-strategy'
   },
   handler: (request, reply) => {
-    reply.file('./public/index.html'); 
+    reply.view('index'); 
   }
 }

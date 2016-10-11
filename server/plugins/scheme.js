@@ -18,11 +18,12 @@ internals.validate = (server, options) => {
   const scheme = {
     authenticate: (request, reply) => {
       if (!options) {
-        return reply('No options specified').code(500);
+        return reply('Server error: No server options specified').code(500);
       }
       
       if (!request.headers.cookie) {
-        return reply('No cookie set').code(401);
+        const message = 'Please log in'
+        return reply.redirect('/login');
       }
 
       const username = extractJson(request.headers.cookie, 'user');

@@ -17,7 +17,9 @@ exports.register = (server, options, next) => {
           function (_, usernameRes) {
             if (usernameRes.rows.map((row) => row && row.username).indexOf(user) === -1) {
               done();
-              return reply({ message: 'User ' + user + ' not registered' }).code(401);
+              return reply.view('login', {
+                usernameMessage: 'User ' + user + ' not registered'
+              }).code(401);
             }
 
             client.query(
@@ -28,7 +30,9 @@ exports.register = (server, options, next) => {
 
                 bcrypt.compare(pass, data.rows[0].password, function (_, res) {
                   if (!res) {
-                    return reply({ message: 'Incorrect password' });
+                    return reply.view('login', {
+                      passwordMessage: 'Incorrect password'
+                    }).code(401);
                   }
 
                   const key = crypto.randomBytes(256).toString('base64');
@@ -37,7 +41,7 @@ exports.register = (server, options, next) => {
                     // 4 hours ttl
                     .then(() => redisCli.expireAsync(user, 4 * 60 * 60))
                     .then(() => {
-                      reply({ message: 'Logging in' }).state('cookie', { user, key });
+                      reply.redirect('/index').state('cookie', { user, key });
                     });
                 });
               }

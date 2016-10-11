@@ -1,6 +1,10 @@
 require('env2')('./config.env');
 const Hapi = require('hapi');
 const Inert = require('inert');
+const Vision = require('vision');
+const Handlebars = require('handlebars');
+const path = require('path');
+const assert = require('assert');
 
 const routes = require('./routes/index.js');
 const plugins = require('./plugins/index.js');
@@ -18,10 +22,13 @@ server.state('cookie', {
   encoding: 'base64json'
 });
 
-server.register([ Inert ].concat(plugins), (err) => {
-  if (err) {
-    throw new Error(err); 
-  }
+server.register([ Inert, Vision ].concat(plugins), (err) => {
+  assert(!err, err);
+
+  server.views({
+    engines: { html: Handlebars },
+    path: path.join(__dirname, 'views')
+  });
 
   server.route(routes);
 });
