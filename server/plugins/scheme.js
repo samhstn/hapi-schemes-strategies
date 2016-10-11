@@ -22,7 +22,6 @@ internals.validate = (server, options) => {
       }
       
       if (!request.headers.cookie) {
-        const message = 'Please log in'
         return reply.redirect('/login');
       }
 

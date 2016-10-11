@@ -20,7 +20,21 @@ exports.register = (server, options, next) => {
   }
 
   server.auth.strategy('my-strategy', 'my-scheme', { validateFunc: validate });
-    
+
+  server.state('cookie', {
+    ttl: null,
+    isHttpOnly: true,
+    encoding: 'base64'
+  });
+
+  server.ext('onRequest', (request, reply) => {
+    if (!(process.env.NODE_ENV === 'test')) {
+      console.log(Object.keys(request), request.auth);
+    }
+
+    reply.continue()
+  });
+
   next();
 };
 

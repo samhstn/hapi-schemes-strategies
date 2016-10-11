@@ -15,13 +15,6 @@ const server = new Hapi.Server();
 
 server.connection({ port });
 
-server.state('cookie', {
-  ttl: null,
-  isSecure: true,
-  isHttpOnly: true,
-  encoding: 'base64json'
-});
-
 server.register([ Inert, Vision ].concat(plugins), (err) => {
   assert(!err, err);
 
