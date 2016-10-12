@@ -4,6 +4,7 @@ const scheme = require('./scheme.js');
 const strategy = require('./strategy.js');
 const register = require('./register.js');
 const login = require('./login.js');
+const clearCookies = require('./clearCookies.js');
 
 module.exports = [
   redis,
@@ -11,5 +12,6 @@ module.exports = [
   scheme,
   strategy,
   register,
-  login
+  login,
+  clearCookies
 ];
