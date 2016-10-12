@@ -23,8 +23,9 @@ exports.register = (server, options, next) => {
 
   server.state('cookie', {
     ttl: null,
-    isHttpOnly: true,
-    encoding: 'base64'
+    encoding: 'base64',
+    isSecure: false,
+    clearInvalid: true
   });
 
   server.ext('onRequest', (request, reply) => {
