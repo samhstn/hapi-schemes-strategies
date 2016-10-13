@@ -1,8 +1,9 @@
+const assert = require('assert');
 const internals = {};
 
 exports.register = (server, options, next) => {
   server.auth.scheme('my-scheme', internals.validate);
-    
+
   next();
 };
 
@@ -12,8 +13,6 @@ exports.register.attributes = {
   }
 };
 
-const extractJson = (cookie, str) => JSON.parse((new Buffer(cookie.split('cookie=')[1], 'base64')).toString())[str];
-
 internals.validate = (server, options) => {
   const scheme = {
     authenticate: (request, reply) => {
@@ -21,20 +20,47 @@ internals.validate = (server, options) => {
         return reply('Server error: No server options specified').code(500);
       }
       
-      if (!request.headers.cookie) {
-        return reply.redirect('/login');
+      if (!request.headers['set-cookie']) {
+        return reply.redirect('/login/logged_out=true');
       }
 
-      const username = extractJson(request.headers.cookie, 'user');
-      const key = extractJson(request.headers.cookie, 'key');
+      const cookie = request.headers['set-cookie'].split('cookie=')[1];
 
-      options.validateFunc(request, username, key, (err, isValid, credentials) => {
-        if (!isValid) {
-          return reply(err).code(401);
-        }
+      if (!cookie) {
+        return reply.redirect('/login/logged_out=true');
+      }
 
-        return reply.continue({ credentials });
-      });
+      const buffer = Buffer.from(cookie, 'base64');
+
+      if (!Buffer.isBuffer(buffer)) {
+        console.log('Not a buffer');
+        return reply.redirect('/login/logged_out=true');
+      }
+
+      try {
+        const userObj = JSON.parse((Buffer.from(cookie, 'base64')).toString())
+
+        const username = userObj.username;
+        const key = userObj.key;
+
+        options.validateFunc(request, username, key, (err, isValid, credentials) => {
+          if (err) {
+            return reply.redirect('/login/' + err).unstate('cookie');
+          }
+
+          if (!isValid) {
+            return reply
+              .redirect('/login/logged_out=true')
+              .unstate('cookie');
+          }
+
+          reply.continue({ credentials });
+        });
+      } catch (_) {
+        reply
+          .redirect('/login/logged_out=true')
+          .unstate('cookie');
+      }
     }
   };
 
