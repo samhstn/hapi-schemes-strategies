@@ -13,10 +13,16 @@ const port = process.env.PORT || 4000;
 
 const server = new Hapi.Server();
 
-server.connection({ port });
+server.connection({ port: port });
 
 server.register([ Inert, Vision ].concat(plugins), (err) => {
   assert(!err, err);
+
+  server.state('cookie', {
+    isSecure: false,
+    isHttpOnly: true,
+    encoding: 'base64json'
+  });
 
   server.views({
     engines: { html: Handlebars },
