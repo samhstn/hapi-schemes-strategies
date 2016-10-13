@@ -1,41 +1,52 @@
-const bcrypt = require('bcrypt');
+const assert = require('assert');
+const Joi = require('joi');
 
-exports.register = (server, options, next) => {
+exports.register = function (server, options, next) {
   server.route({
-    method: 'POST',
+    method: 'post',
     path: '/register',
-    handler: (request, reply) => {
-      const user = request.payload.username;
-      const pass = request.payload.password;
-      const pool = server.app.pool;
-
-      function _available (users, username) {
-        return users.rows.map((row) => row && row.username)
-          .indexOf(username) > -1;
+    config: {
+      validate: {
+        payload: {
+          username: Joi.string().required(),
+          password: Joi.string().required()
+        }
       }
+    },
+    handler: (request, reply) => {
+      const username = request.payload.username;
+      const password = request.payload.password;
 
-      pool.connect((_, client, done) => {
-        client.query('select username from user_table', (_, res) => {
-          if (_available(res, user)) {
-            done();
-            return reply.view('register', {
-              message: 'Username ' + user + ' not available'
-            }).code(401);
-          }
+      server.app.pool.connect((connectErr, client, done) => {
+        assert(!connectErr, connectErr);
 
-          bcrypt.hash(pass, 3, function (_, hash) {
+        client.query(
+          'select username from user_table',
+          (selectErr, data) => {
+            assert(!selectErr, selectErr);
+
+            if (data.rows.map((u) => u.username).indexOf(username) > -1) {
+              done();
+              return reply({
+                message: 'Username ' + username + ' is not available',
+                inserted: false
+              });
+            }
+
             client.query(
-              'insert into user_table (username, password) values ($1, $2)',
-              [user, hash],
-              function () {
+              'insert into user_table (username, password) values ($1,$2)',
+              [username, password],
+              (insertErr) => {
                 done();
-                reply.view('register', {
-                  message: 'User ' + user + ' registered'
+                assert(!insertErr, insertErr);
+                reply({
+                  message: 'Username ' + username + ' registered',
+                  inserted: true
                 });
               }
             );
-          });
-        });
+          }
+        );
       });
     }
   });
@@ -43,10 +54,8 @@ exports.register = (server, options, next) => {
   next();
 }
 
-
 exports.register.attributes = {
   pkg: {
     name: 'register'
   }
-};
-
+}
