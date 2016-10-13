@@ -1,49 +1,77 @@
+const Joi = require('joi');
+const assert = require('assert');
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
 
-exports.register = (server, options, next) => {
+exports.register = function (server, options, next) {
   server.route({
     method: 'post',
     path: '/login',
+    config: {
+      validate: {
+        payload: {
+          username: Joi.string().required(),
+          password: Joi.string().required()
+        }
+      }
+    },
     handler: (request, reply) => {
-      const user = request.payload.username;
-      const pass = request.payload.password;
-      const pool = server.app.pool;
-      const redisCli = server.app.redisCli;
+      const username = request.payload.username;
+      const password = request.payload.password;
 
-      pool.connect(function (_, client, done) {
+      server.app.pool.connect((connectErr, client, done) => {
+        assert(!connectErr, connectErr);
+
         client.query(
           'select username from user_table',
-          function (_, usernameRes) {
-            if (usernameRes.rows.map((row) => row && row.username).indexOf(user) === -1) {
+          (selectUserErr, usernames) => {
+            assert(!selectUserErr, selectUserErr);
+
+            if (!usernames.rows.filter((u) => username === u.username)[0]) {
               done();
-              return reply.view('login', {
-                usernameMessage: 'User ' + user + ' not registered'
+              return reply({
+                message: 'username not registered',
+                login: false
               }).code(401);
             }
 
             client.query(
               'select password from user_table where username=$1',
-              [user],
-              function (_, data) {
+              [username],
+              (selectPassErr, dbPassword) => {
                 done();
+                assert(!selectPassErr, selectPassErr);
 
-                bcrypt.compare(pass, data.rows[0].password, function (_, res) {
-                  if (!res) {
-                    return reply.view('login', {
-                      passwordMessage: 'Incorrect password'
-                    }).code(401);
-                  }
+                if (dbPassword.rows[0].password !== password) {
+                  return reply({
+                    message: 'incorrect password',
+                    login: false
+                  }).code(401);
+                }
 
-                  const key = crypto.randomBytes(256).toString('base64');
+                const key = crypto.randomBytes(256).toString('base64');
 
-                  redisCli.setAsync(user, key)
-                    // 4 hours ttl
-                    .then(() => redisCli.expireAsync(user, 4 * 60 * 60))
-                    .then(() => {
-                      reply.redirect('/').state('cookie', { user, key });
-                    });
-                });
+                server.app.redisCli.keysAsync('*')
+                  .then((keys) => {
+                    if (keys.indexOf(username) > -1) {
+                      return reply({
+                        message: 'already logged in',
+                        login: true
+                      });
+                    }
+
+                    server.app.redisCli.setAsync(username, key)
+                      .then(() => {
+                        reply({
+                          message: 'logging in',
+                          login: true
+                        }).state('cookie', {
+                          username: username,
+                          key: key
+                        });
+                      })
+                      .catch((error) => assert(!error, error));
+                  })
+                  .catch((err) => assert(!err, err));
               }
             );
           }
@@ -55,10 +83,8 @@ exports.register = (server, options, next) => {
   next();
 }
 
-
 exports.register.attributes = {
   pkg: {
     name: 'login'
   }
-};
-
+}
