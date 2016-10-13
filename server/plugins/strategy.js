@@ -5,13 +5,13 @@ exports.register = (server, options, next) => {
     redisCli.keysAsync('*')
       .then((keys) => {
         if (keys.indexOf(username) === -1) {
-          return cb('Incorrect username', false);
+          return cb('logged_out=true');
         }
 
         redisCli.getAsync(username)
           .then((redisKey) => {
             if (redisKey !== key) {
-              return cb('Incorrect password', false);
+              return cb('logged_out=true');
             }
 
             return cb(null, true, { username, key });
@@ -20,21 +20,6 @@ exports.register = (server, options, next) => {
   }
 
   server.auth.strategy('my-strategy', 'my-scheme', { validateFunc: validate });
-
-  server.state('cookie', {
-    ttl: null,
-    encoding: 'base64',
-    isSecure: false,
-    clearInvalid: true
-  });
-
-  server.ext('onRequest', (request, reply) => {
-    if (!(process.env.NODE_ENV === 'test')) {
-      console.log(Object.keys(request), request.auth);
-    }
-
-    reply.continue()
-  });
 
   next();
 };
