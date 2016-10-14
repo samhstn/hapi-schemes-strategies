@@ -1,7 +1,9 @@
+const qs = require('querystring');
+
 module.exports = {
   method: 'get',
-  path: '/register',
+  path: '/register/{param?}',
   handler: (request, reply) => {
-    reply.view('register');
+    reply.view('register', qs.parse(request.params.param));
   }
 }
