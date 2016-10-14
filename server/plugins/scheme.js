@@ -19,12 +19,18 @@ internals.validate = (server, options) => {
       if (!options) {
         return reply('Server error: No server options specified').code(500);
       }
-      
-      if (!request.headers['set-cookie']) {
+
+      if (!request.headers.cookie) {
         return reply.redirect('/login/logged_out=true');
       }
 
-      const cookie = request.headers['set-cookie'].split('cookie=')[1];
+      const cookie = request.headers.cookie.split('cookie=')[1];
+      
+      // if (!request.headers['set-cookie']) {
+      //   return reply.redirect('/login/logged_out=true');
+      // }
+
+      // const cookie = request.headers['set-cookie'].split('cookie=')[1];
 
       if (!cookie) {
         return reply.redirect('/login/logged_out=true');
