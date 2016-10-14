@@ -354,27 +354,22 @@ tape('/ :: GET should reach / when logged in properly', (t) => {
     url: '/'
   };
 
-  let cookie;
-
   flushDb()
     .then(() => registerUser({ username: 'sam', password: 'pass' }))
     .then(() => server.inject(loginOpts))
     .then((res) => {
       t.equal(res.statusCode, 302);
       t.ok(res.headers['set-cookie'][0]);
+      t.equal(res.headers.location, '/');
+      const cookie = res.headers['set-cookie'][0];
+      const optsWithCookie = Object.assign(opts, { headers: { 'set-cookie': [ cookie ] } });
+      return server.inject(optsWithCookie);
+    })
+    .then((res) => {
+      t.equal(res.statusCode, 200);
+      t.ok(res.payload.includes('Hello Home'));
       t.end();
     })
-    //   cookie = res.headers['set-cookie'][0];
-    //   const optsWithCookie = Object.assign(opts, { headers: { 'set-cookie': cookie, cookie: cookie.split('cookie=')[1] } });
-    //   return server.inject(optsWithCookie);
-    // })
-    // .then((res) => {
-    //   console.log(res);
-    //   t.equal(res.statusCode, 200);
-    //   t.equal(res.headers.location, 'hi');
-    //   t.ok(res.payload.includes('Hello Home'));
-    //   t.end();
-    // })
     .catch((err) => assert(!err, err));
 });
 
