@@ -28,10 +28,10 @@ exports.register = function (server, options, next) {
 
             if (!usernames.rows.filter((u) => username === u.username)[0]) {
               done();
-              return reply({
-                message: 'username not registered',
-                login: false
-              }).code(401);
+              return reply
+                .redirect(
+                  '/login/user_not_registered=true&user=' + username
+                );
             }
 
             client.query(
@@ -42,10 +42,10 @@ exports.register = function (server, options, next) {
                 assert(!selectPassErr, selectPassErr);
 
                 if (dbPassword.rows[0].password !== password) {
-                  return reply({
-                    message: 'incorrect password',
-                    login: false
-                  }).code(401);
+                  return reply
+                    .redirect(
+                      '/login/incorrect_pass=true&user=' + username
+                    );
                 }
 
                 const key = crypto.randomBytes(256).toString('base64');
@@ -61,13 +61,12 @@ exports.register = function (server, options, next) {
 
                     server.app.redisCli.setAsync(username, key)
                       .then(() => {
-                        reply({
-                          message: 'logging in',
-                          login: true
-                        }).state('cookie', {
-                          username: username,
-                          key: key
-                        });
+                        reply
+                          .redirect('/')
+                          .state('cookie', {
+                            username: username,
+                            key: key
+                          });
                       })
                       .catch((error) => assert(!error, error));
                   })
