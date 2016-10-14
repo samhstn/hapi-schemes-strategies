@@ -20,17 +20,16 @@ internals.validate = (server, options) => {
         return reply('Server error: No server options specified').code(500);
       }
 
-      if (!request.headers.cookie) {
+      if (!(request.headers.cookie || request.headers['set-cookie'])) {
         return reply.redirect('/login/logged_out=true');
       }
 
-      const cookie = request.headers.cookie.split('cookie=')[1];
-      
-      // if (!request.headers['set-cookie']) {
-      //   return reply.redirect('/login/logged_out=true');
-      // }
+      // since in testing we send cookies in a different form
+      // production will always be the first option
+      // testing will always be the second
+      const _c = request.headers.cookie || request.headers['set-cookie'][0];
 
-      // const cookie = request.headers['set-cookie'].split('cookie=')[1];
+      const cookie = _c.split('cookie=')[1];
 
       if (!cookie) {
         return reply.redirect('/login/logged_out=true');
