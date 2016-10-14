@@ -2,5 +2,58 @@
 <html>
   <body>
     <h1>Hello Register</h1>
+
+    <form method='post' action='/register'>
+      <div style='display: block'>
+        <label>Username: </label>
+        {{#if unavailable_user}}
+          <input id=username' name='username' type='text' value='{{user}}' />
+          <label style='color: red'>Username not available</label>
+        {{else}}
+          <input id='username' name='username' type='text' />
+        {{/if}}
+      </div>
+      <div style='display: block'>
+        <label>Password: </label>
+        <input id='password' name='password' type='password' />
+      </div>
+      <button type='submit' id='submit'>Submit</button>
+    </form>
+
+    {{#if registered}}
+      <h4>You have been registered, please log in</h4>
+    {{/if}}
+
+    <h4>Signed up? Login <a href='/login'>here</a></h4>
+
+    <script>
+      // function getElById(id) {
+      //   return document.getElementById(id);
+      // }
+
+      // function handleClick (e) {
+      //   e.preventDefault();
+
+      //   var user = getElById('username').value
+      //   var pass = getElById('password').value
+
+      //   var xhr = new XMLHttpRequest();
+
+      //   xhr.onreadystatechange = function () {
+      //     if (xhr.readyState === 4 && xhr.status === 200) {
+      //       console.log(typeof xhr.responseText, xhr.responseText);
+      //     }
+      //   }
+      //   xhr.open('post', '/register');
+      //   xhr.setRequestHeader('Content-Type', 'application/json');
+      //   xhr.send(JSON.stringify({
+      //     username: user,
+      //     password: pass
+      //   }));
+      // }
+
+      // getElById('submit').addEventListener('click', handleClick);
+
+    </script>
   </body>
 </html>
