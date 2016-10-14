@@ -27,10 +27,8 @@ exports.register = function (server, options, next) {
 
             if (data.rows.map((u) => u.username).indexOf(username) > -1) {
               done();
-              return reply({
-                message: 'Username ' + username + ' is not available',
-                inserted: false
-              });
+              return reply
+                .redirect('/register/unavailable_user=true&user=' + username);
             }
 
             client.query(
@@ -39,10 +37,8 @@ exports.register = function (server, options, next) {
               (insertErr) => {
                 done();
                 assert(!insertErr, insertErr);
-                reply({
-                  message: 'Username ' + username + ' registered',
-                  inserted: true
-                });
+                reply
+                  .redirect('/register/registered=true');
               }
             );
           }
