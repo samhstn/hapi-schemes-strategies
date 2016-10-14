@@ -12,17 +12,20 @@ exports.register = function (server, options, next) {
       }
     },
     handler: (request, reply) => {
-      console.log(request.headers.cookie.split('cookie=')[1]);
-      const cookie = request.headers.cookie.split('cookie=')[1];
-      const userObj = JSON.parse((Buffer.from(cookie, 'base64')).toString())
+      try {
+        const cookie = request.headers.cookie.split('cookie=')[1];
+        const userObj = JSON.parse((Buffer.from(cookie, 'base64')).toString())
 
-      server.app.redisCli.delAsync(userObj.username)
-        .then(() => {
-          // reply.redirect doesn't seem to work here
-          // instead doing client side redirection
-          reply({ redirect: true })
-            .unstate('cookie');
-        });
+        server.app.redisCli.delAsync(userObj.username)
+          .then(() => {
+            // reply.redirect doesn't seem to work here
+            // instead doing client side redirection
+            reply({ redirect: true })
+              .unstate('cookie');
+          });
+      } catch (_) {
+        reply('Server error: ', _).code(500);
+      }
     }
   });
 
