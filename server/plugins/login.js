@@ -68,9 +68,7 @@ exports.register = function (server, options, next) {
                             key: key
                           });
                       })
-                      .catch((error) => assert(!error, error));
                   })
-                  .catch((err) => assert(!err, err));
               }
             );
           }
