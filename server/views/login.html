@@ -2,5 +2,34 @@
 <html>
   <body>
     <h1>Hello Login</h1>
+    {{#if logged_out}}
+      <h3 style='color: red'> You have been logged out, please log in </h3>
+    {{/if}}
+
+    <form method='post' action='/login'>
+      <div style='display: block'>
+      <label>Username: </label>
+        {{#if user_not_registered}}
+          <input name='username' type='text' value='{{user}}'/>
+          <label style='color: red'>User not registered</label>
+        {{else}}
+          {{# if incorrect_pass}}
+          <input name='username' type='text' value='{{user}}'/>
+          {{else}}
+          <input name='username' type='text'/>
+          {{/if}}
+        {{/if}}
+      </div>
+      <div style='display: block'>
+        <label>Password: </label>
+        <input name='password' type='password' />
+        {{#if incorrect_pass}}
+          <label style='color: red'>Incorrect password</label>
+        {{/if}}
+      </div>
+      <button type='submit' id='submit'>Submit</button>
+    </form>
+
+    <h4>Havn't signed up? Register <a href='/register'>here</a></h4>
   </body>
 </html>
